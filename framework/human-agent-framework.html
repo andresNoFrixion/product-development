@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Development Human-Agent Framework</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; }
+
+        header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 2rem 3rem; border-bottom: 1px solid #2a2a4a; }
+        header h1 { font-size: 1.8rem; font-weight: 600; color: #fff; margin-bottom: 0.3rem; }
+        header p { color: #8888aa; font-size: 0.95rem; }
+
+        nav { display: flex; gap: 0; padding: 0 3rem; background: #12121f; border-bottom: 1px solid #2a2a4a; overflow-x: auto; }
+        nav button { padding: 1rem 1.5rem; background: none; border: none; color: #8888aa; font-size: 0.9rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+        nav button:hover { color: #c0c0e0; background: rgba(255,255,255,0.03); }
+        nav button.active { color: #7c8cf5; border-bottom-color: #7c8cf5; }
+
+        .tab-content { display: none; padding: 2rem 3rem; max-width: 1400px; }
+        .tab-content.active { display: block; }
+
+        .section-title { font-size: 1.1rem; color: #7c8cf5; margin: 2rem 0 1rem; font-weight: 500; }
+        .section-desc { color: #8888aa; margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+        /* ===== FLOW DIAGRAM ===== */
+        .flow-container { background: #13131f; border: 1px solid #2a2a4a; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; overflow-x: auto; }
+        .flow-container h2 { font-size: 1.1rem; color: #7c8cf5; margin-bottom: 1.5rem; font-weight: 500; }
+
+        .flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: nowrap; min-width: max-content; padding: 1rem 0; }
+        .flow-vertical { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+
+        .flow-node { padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.8rem; text-align: center; white-space: nowrap; position: relative; cursor: default; transition: transform 0.15s, box-shadow 0.15s; }
+        .flow-node:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+
+        .flow-node.human { background: #1a3a2e; border: 1.5px solid #50c878; color: #a0e8b8; }
+        .flow-node.agent { background: #1a1a3e; border: 1.5px solid #7c8cf5; color: #b0b8f5; }
+        .flow-node.artefact { background: #2a1a1a; border: 1.5px solid #ff6b6b; color: #ffaaaa; border-radius: 20px; }
+        .flow-node.tbd { background: #2a2a2a; border: 1.5px dashed #555; color: #888; }
+        .flow-node.ref { background: #1a1a1a; border: 1.5px solid #555; color: #888; border-radius: 4px; font-style: italic; }
+
+        .flow-arrow { color: #4a4a6a; font-size: 1.2rem; flex-shrink: 0; user-select: none; }
+        .flow-arrow.down { transform: rotate(90deg); }
+
+        .flow-label { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem; text-align: center; }
+
+        .flow-group { background: rgba(255,255,255,0.02); border: 1px solid #2a2a3a; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+        .flow-group-label { font-size: 0.7rem; color: #5a5a7a; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; font-weight: 600; }
+
+        .flow-pair { display: flex; align-items: center; gap: 0.4rem; }
+
+        /* ===== PHASE CARDS (overview) ===== */
+        .phase-row { display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem; }
+        .phase-card { background: #13131f; border: 1px solid #2a2a4a; border-radius: 12px; padding: 1.5rem; min-width: 220px; flex: 1; position: relative; overflow: hidden; }
+        .phase-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .phase-card.opp::before { background: #50c878; }
+        .phase-card.strat::before { background: #ffa500; }
+        .phase-card.prob::before { background: #ff6b6b; }
+        .phase-card.sol::before { background: #7c8cf5; }
+        .phase-card.fe::before, .phase-card.qa::before, .phase-card.int::before { background: #00bcd4; }
+        .phase-card h3 { font-size: 0.95rem; color: #fff; margin-bottom: 0.5rem; }
+        .phase-card .human-label { font-size: 0.8rem; color: #50c878; margin-bottom: 0.2rem; }
+        .phase-card .agent-label { font-size: 0.8rem; color: #7c8cf5; margin-bottom: 0.5rem; }
+        .phase-card .artefact-label { font-size: 0.75rem; color: #ff6b6b; background: rgba(255,107,107,0.1); padding: 0.2rem 0.5rem; border-radius: 10px; display: inline-block; }
+        .phase-card .phase-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem; }
+        .phase-card .phase-tag.discovery { color: #50c878; }
+        .phase-card .phase-tag.delivery { color: #00bcd4; }
+
+        .phase-connector { display: flex; align-items: center; color: #3a3a5a; font-size: 1.8rem; flex-shrink: 0; }
+
+        /* ===== PRINCIPLES ===== */
+        .principles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .principle-card { background: #13131f; border: 1px solid #2a2a4a; border-left: 3px solid #7c8cf5; border-radius: 0 10px 10px 0; padding: 1.2rem; }
+        .principle-card h4 { color: #7c8cf5; font-size: 0.9rem; margin-bottom: 0.4rem; }
+        .principle-card p { color: #8888aa; font-size: 0.82rem; line-height: 1.4; }
+
+        /* ===== AGENT CARDS ===== */
+        .agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.2rem; margin-top: 1rem; }
+        .agent-card { background: #13131f; border: 1px solid #2a2a4a; border-radius: 10px; padding: 1.5rem; cursor: pointer; transition: all 0.2s; }
+        .agent-card:hover { border-color: #7c8cf5; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(124,140,245,0.1); }
+        .agent-card .phase-badge { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; }
+        .agent-card .phase-badge.opportunity { color: #50c878; }
+        .agent-card .phase-badge.strategy { color: #ffa500; }
+        .agent-card .phase-badge.problem { color: #ff6b6b; }
+        .agent-card .phase-badge.solution { color: #7c8cf5; }
+        .agent-card .phase-badge.delivery { color: #00bcd4; }
+        .agent-card h3 { font-size: 1rem; color: #fff; margin-bottom: 0.3rem; }
+        .agent-card .human-pair { font-size: 0.85rem; color: #8888aa; margin-bottom: 0.8rem; }
+        .agent-card .mission-preview { font-size: 0.85rem; color: #9999bb; line-height: 1.4; }
+
+        /* ===== ARTEFACT CHAIN ===== */
+        .artefact-chain { display: flex; gap: 0.8rem; overflow-x: auto; padding: 1.5rem 0; align-items: center; }
+        .artefact-card { min-width: 180px; background: #13131f; border: 1px solid #2a2a4a; border-radius: 10px; padding: 1.2rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+        .artefact-card:hover { border-color: #7c8cf5; }
+        .artefact-card .prefix { font-size: 0.75rem; color: #7c8cf5; font-family: monospace; margin-bottom: 0.3rem; }
+        .artefact-card h4 { font-size: 0.95rem; color: #fff; margin-bottom: 0.5rem; }
+        .artefact-card p { font-size: 0.8rem; color: #8888aa; line-height: 1.4; }
+        .chain-arrow { display: flex; align-items: center; color: #3a3a5a; font-size: 1.5rem; flex-shrink: 0; }
+
+        /* ===== MATRIX TABLE ===== */
+        .matrix-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .matrix-table th { background: #1a1a2e; color: #7c8cf5; padding: 0.8rem; text-align: left; border-bottom: 1px solid #2a2a4a; font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .matrix-table td { padding: 0.8rem; border-bottom: 1px solid #1a1a2a; color: #c0c0d0; }
+        .matrix-table tr:hover { background: rgba(124,140,245,0.05); }
+        .matrix-table .read-badge { display: inline-block; padding: 0.15rem 0.5rem; background: rgba(80,200,120,0.12); border: 1px solid rgba(80,200,120,0.25); border-radius: 3px; font-size: 0.75rem; color: #50c878; margin: 0.1rem; }
+        .matrix-table .write-badge { display: inline-block; padding: 0.15rem 0.5rem; background: rgba(124,140,245,0.12); border: 1px solid rgba(124,140,245,0.25); border-radius: 3px; font-size: 0.75rem; color: #7c8cf5; margin: 0.1rem; }
+
+        /* ===== DETAIL OVERLAY ===== */
+        .detail-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+        .detail-overlay.visible { display: flex; }
+        .detail-panel { background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 12px; padding: 2.5rem; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; position: relative; }
+        .detail-panel .close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; }
+        .detail-panel .copy-btn { position: absolute; top: 1rem; right: 3rem; background: rgba(124,140,245,0.15); border: 1px solid rgba(124,140,245,0.3); color: #7c8cf5; font-size: 0.75rem; padding: 0.3rem 0.7rem; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+        .detail-panel .copy-btn:hover { background: rgba(124,140,245,0.3); }
+        .detail-panel .copy-btn.copied { background: rgba(80,200,120,0.2); border-color: rgba(80,200,120,0.4); color: #50c878; }
+        .detail-panel h3 { font-size: 1.3rem; color: #fff; margin-bottom: 0.5rem; }
+        .detail-panel .subtitle { color: #7c8cf5; font-size: 0.85rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .detail-panel .mission { background: rgba(124,140,245,0.1); border-left: 3px solid #7c8cf5; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0 8px 8px 0; font-style: italic; color: #c0c0e0; }
+        .detail-panel .section { margin-bottom: 1.2rem; }
+        .detail-panel .section h4 { color: #9999bb; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+        .detail-panel .section ul { list-style: none; padding: 0; }
+        .detail-panel .section li { padding: 0.3rem 0; padding-left: 1.2rem; position: relative; color: #c0c0d0; font-size: 0.9rem; }
+        .detail-panel .section li::before { content: '\2192'; position: absolute; left: 0; color: #7c8cf5; }
+        .detail-panel .tag { display: inline-block; padding: 0.25rem 0.8rem; background: rgba(124,140,245,0.15); border: 1px solid rgba(124,140,245,0.3); border-radius: 4px; font-size: 0.8rem; color: #7c8cf5; margin-right: 0.4rem; margin-bottom: 0.3rem; }
+        .detail-panel .tag.green { background: rgba(80,200,120,0.15); border-color: rgba(80,200,120,0.3); color: #50c878; }
+        .detail-panel .tag.orange { background: rgba(255,165,0,0.15); border-color: rgba(255,165,0,0.3); color: #ffa500; }
+
+        /* ===== DISCOVERY DETAIL ROWS ===== */
+        .discovery-stage { background: #13131f; border: 1px solid #2a2a4a; border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; }
+        .discovery-stage h3 { font-size: 1rem; color: #fff; margin-bottom: 0.3rem; }
+        .discovery-stage .stage-desc { font-size: 0.85rem; color: #8888aa; margin-bottom: 1rem; }
+        .stage-lanes { display: flex; flex-direction: column; gap: 0.8rem; }
+        .stage-lane { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+        .stage-lane .flow-node { font-size: 0.78rem; padding: 0.5rem 1rem; }
+        .stage-output { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #2a2a3a; display: flex; align-items: center; gap: 0.8rem; }
+        .stage-output-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 0.08em; }
+
+        /* ===== EXAMPLE THREAD ===== */
+        .example-thread { margin-top: 1rem; }
+        .example-step { background: #13131f; border: 1px solid #2a2a4a; border-radius: 10px; padding: 1.3rem 1.5rem; margin-bottom: 0.3rem; }
+        .example-step-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; }
+        .example-step-header .eid { font-family: monospace; font-size: 0.8rem; color: #7c8cf5; background: rgba(124,140,245,0.12); padding: 0.2rem 0.6rem; border-radius: 4px; }
+        .example-step-header .etype { font-size: 0.95rem; color: #fff; font-weight: 500; }
+        .example-step-header .estatus { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .example-step-header .estatus.captured { background: rgba(255,165,0,0.15); color: #ffa500; }
+        .example-step-header .estatus.approved { background: rgba(80,200,120,0.15); color: #50c878; }
+        .example-step-header .estatus.validated { background: rgba(80,200,120,0.15); color: #50c878; }
+        .example-step-header .estatus.ready { background: rgba(0,188,212,0.15); color: #00bcd4; }
+        .example-step-header .estatus.complete { background: rgba(124,140,245,0.15); color: #7c8cf5; }
+        .example-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; }
+        .example-field { display: flex; flex-direction: column; gap: 0.1rem; }
+        .example-field .fl { font-size: 0.68rem; color: #5a5a7a; text-transform: uppercase; letter-spacing: 0.06em; }
+        .example-field .fv { font-size: 0.82rem; color: #c0c0d0; line-height: 1.35; }
+        .example-field.full { grid-column: 1 / -1; }
+        .example-field .fv.highlight { color: #50c878; font-weight: 500; }
+        .example-field .fv.mono { font-family: monospace; font-size: 0.78rem; }
+        .example-connector { text-align: center; color: #3a3a5a; font-size: 1.2rem; margin: 0.1rem 0; user-select: none; }
+        .example-connector.split { display: flex; justify-content: center; gap: 3rem; }
+        @media (max-width: 768px) {
+            .example-fields { grid-template-columns: 1fr; }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            header, nav, .tab-content { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .agents-grid { grid-template-columns: 1fr; }
+            .principles-grid { grid-template-columns: 1fr; }
+            .phase-row { flex-direction: column; }
+            .phase-connector { transform: rotate(90deg); justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Product Development Human-Agent Framework</h1>
+    <p>Signal to Delivery &mdash; 9 Specialized Agents, 7 Artefact Types</p>
+</header>
+
+<nav>
+    <button class="active" onclick="showTab('overview')">Overview</button>
+    <button onclick="showTab('discovery')">Product Discovery</button>
+    <button onclick="showTab('delivery')">Product Delivery</button>
+    <button onclick="showTab('agents')">All Agents</button>
+    <button onclick="showTab('artefacts')">Artefact Chain</button>
+    <button onclick="showTab('matrix')">Access Matrix</button>
+</nav>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div id="tab-overview" class="tab-content active">
+    <h2 class="section-title">End-to-End Lifecycle</h2>
+    <p class="section-desc">From customer signal to shipped feature. Green = Human, Blue = Agent, Red = Artefact.</p>
+
+    <div class="flow-container">
+        <h2>Product Discovery</h2>
+        <div class="flow">
+            <div class="flow-group">
+                <div class="flow-group-label">Opportunity Space</div>
+                <div class="flow-pair"><span class="flow-node human">Sales/AM</span><span class="flow-arrow">&rarr;</span><span class="flow-node agent">Agentic AM</span></div>
+                <div class="flow-pair"><span class="flow-node human">Cust Support</span><span class="flow-arrow">&rarr;</span><span class="flow-node agent">Agentic CS</span></div>
+                <div class="flow-pair"><span class="flow-node human">Cust Success</span><span class="flow-arrow">&rarr;</span><span class="flow-node agent">Agentic CSM</span></div>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-vertical">
+                <span class="flow-node artefact">Opportunity Signal</span>
+                <span class="flow-node artefact">Opportunity Signal</span>
+                <span class="flow-node artefact">Opportunity Signal</span>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-group">
+                <div class="flow-group-label">Strategy Convergence</div>
+                <div class="flow-pair"><span class="flow-node human">CPO</span><span class="flow-arrow">&harr;</span><span class="flow-node agent">PM Consolidation</span></div>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node artefact">Strategic Brief</span>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-group">
+                <div class="flow-group-label">Problem Space</div>
+                <div class="flow-pair"><span class="flow-node human">Product Designer</span><span class="flow-arrow">&harr;</span><span class="flow-node agent">PM Research</span></div>
+                <span class="flow-node ref">research/</span>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node artefact">Problem Analysis</span>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-group">
+                <div class="flow-group-label">Solution Space</div>
+                <div class="flow-pair"><span class="flow-node human">Product Designer</span><span class="flow-arrow">&harr;</span><span class="flow-node agent">UX/UI Design</span></div>
+                <span class="flow-node ref">designs/</span>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node artefact">Solution Design</span>
+        </div>
+    </div>
+
+    <div class="flow-container">
+        <h2>Product Delivery</h2>
+        <div class="flow">
+            <span class="flow-node artefact">Solution Design</span>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-vertical">
+                <div class="flow-group">
+                    <div class="flow-group-label">Frontend Development</div>
+                    <div class="flow-pair"><span class="flow-node human">Product Engineer</span><span class="flow-arrow">&harr;</span><span class="flow-node agent">SW Frontend</span></div>
+                </div>
+                <div class="flow-group">
+                    <div class="flow-group-label">Acceptance + Tests</div>
+                    <div class="flow-pair"><span class="flow-node human">QA Engineer</span><span class="flow-arrow">&harr;</span><span class="flow-node agent">SW QA</span></div>
+                </div>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-vertical">
+                <span class="flow-node artefact">Implementation Artefact</span>
+                <span class="flow-node artefact">Test Specification</span>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-group">
+                <div class="flow-group-label">Integration</div>
+                <div class="flow-pair"><span class="flow-node human">Product Engineer</span><span class="flow-arrow">&harr;</span><span class="flow-node agent">SW Integration</span></div>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node artefact">Integration Package</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node tbd">Deployment &mdash; TBD</span>
+        </div>
+    </div>
+
+    <h2 class="section-title">Design Principles</h2>
+    <div class="principles-grid">
+        <div class="principle-card">
+            <h4>Specialized Agents</h4>
+            <p>Narrow scope = better output. Each agent is a specialist, not a generalist.</p>
+        </div>
+        <div class="principle-card">
+            <h4>Dual-Format Artefacts</h4>
+            <p>Single TOON source that renders to human-readable view. One source of truth.</p>
+        </div>
+        <div class="principle-card">
+            <h4>Stateless Handoff</h4>
+            <p>Artefact carries ALL context. Agents are stateless between stages.</p>
+        </div>
+        <div class="principle-card">
+            <h4>Human Decides</h4>
+            <p>Agent proposes, human approves. Every decision point has a human in the loop.</p>
+        </div>
+        <div class="principle-card">
+            <h4>Full Traceability</h4>
+            <p>Walk any artefact forward or backward through the entire chain.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DISCOVERY ==================== -->
+<div id="tab-discovery" class="tab-content">
+    <h2 class="section-title">Product Discovery Flow</h2>
+    <p class="section-desc">Opportunity Space &rarr; Strategy Convergence &rarr; Problem Space &rarr; Solution Space</p>
+
+    <div class="discovery-stage">
+        <h3>Opportunity Space &mdash; Signal Capture</h3>
+        <div class="stage-desc">Three parallel lanes capture signals from different sources. Same output schema, different extraction specialization.</div>
+        <div class="stage-lanes">
+            <div class="stage-lane">
+                <span class="flow-node human">Sales / Account Manager</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node agent">Agentic Account Manager</span>
+                <span style="color:#666;font-size:0.75rem;font-style:italic;margin-left:0.5rem">Commercial context, competitive displacement, deal signals</span>
+            </div>
+            <div class="stage-lane">
+                <span class="flow-node human">Customer Support</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node agent">Agentic Customer Support</span>
+                <span style="color:#666;font-size:0.75rem;font-style:italic;margin-left:0.5rem">Bug vs opportunity, workaround detection, ticket frequency</span>
+            </div>
+            <div class="stage-lane">
+                <span class="flow-node human">Customer Success</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node agent">Agentic Customer Success</span>
+                <span style="color:#666;font-size:0.75rem;font-style:italic;margin-left:0.5rem">Relationship patterns, churn risk, expansion opportunities</span>
+            </div>
+        </div>
+        <div class="stage-output">
+            <span class="stage-output-label">Output:</span>
+            <span class="flow-node artefact">Opportunity Signal</span>
+            <span style="color:#666;font-size:0.78rem">Human readable + AI Oriented (TOON)</span>
+        </div>
+    </div>
+
+    <div style="text-align:center;color:#3a3a5a;font-size:1.5rem;margin:0.5rem 0;">&darr;</div>
+
+    <div class="discovery-stage">
+        <h3>Strategy Convergence &mdash; CPO Funnel</h3>
+        <div class="stage-desc">All signals converge here. CPO makes proceed/park/reject decisions. Fan-in: many signals &rarr; one brief.</div>
+        <div class="stage-lanes">
+            <div class="stage-lane">
+                <span class="flow-node artefact">OPP Signal (Sales)</span>
+                <span class="flow-node artefact">OPP Signal (Support)</span>
+                <span class="flow-node artefact">OPP Signal (CS)</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node human">CPO</span>
+                <span class="flow-arrow">&harr;</span>
+                <span class="flow-node agent">PM Consolidation Agent</span>
+            </div>
+        </div>
+        <div class="stage-output">
+            <span class="stage-output-label">Output:</span>
+            <span class="flow-node artefact">Strategic Brief</span>
+            <span style="color:#666;font-size:0.78rem">Consolidated, prioritized, strategy-validated</span>
+        </div>
+    </div>
+
+    <div style="text-align:center;color:#3a3a5a;font-size:1.5rem;margin:0.5rem 0;">&darr;</div>
+
+    <div class="discovery-stage">
+        <h3>Problem Space &mdash; Analysis &amp; Research</h3>
+        <div class="stage-desc">Product Designer leads problem framing. PM Research Agent provides deep research across regulatory, technical, and market dimensions.</div>
+        <div class="stage-lanes">
+            <div class="stage-lane">
+                <span class="flow-node artefact">Strategic Brief</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node human">Product Designer</span>
+                <span class="flow-arrow">&harr;</span>
+                <span class="flow-node agent">PM Research Agent</span>
+                <span class="flow-arrow">&harr;</span>
+                <span class="flow-node ref">research/</span>
+            </div>
+        </div>
+        <div class="stage-output">
+            <span class="stage-output-label">Output:</span>
+            <span class="flow-node artefact">Problem Analysis</span>
+            <span style="color:#666;font-size:0.78rem">Problem framing, research findings, recommendation</span>
+        </div>
+    </div>
+
+    <div style="text-align:center;color:#3a3a5a;font-size:1.5rem;margin:0.5rem 0;">&darr;</div>
+
+    <div class="discovery-stage">
+        <h3>Solution Space &mdash; Design</h3>
+        <div class="stage-desc">Product Designer makes design decisions. UX/UI Agent produces flows, component specs, interaction patterns. This is the last Discovery stage before Delivery splits.</div>
+        <div class="stage-lanes">
+            <div class="stage-lane">
+                <span class="flow-node artefact">Problem Analysis</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node human">Product Designer</span>
+                <span class="flow-arrow">&harr;</span>
+                <span class="flow-node agent">UX/UI Design Agent</span>
+                <span class="flow-arrow">&harr;</span>
+                <span class="flow-node ref">designs/</span>
+            </div>
+        </div>
+        <div class="stage-output">
+            <span class="stage-output-label">Output:</span>
+            <span class="flow-node artefact">Solution Design</span>
+            <span style="color:#666;font-size:0.78rem">Specs, flows, acceptance criteria &mdash; SPLITS into two delivery tracks</span>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DELIVERY ==================== -->
+<div id="tab-delivery" class="tab-content">
+    <h2 class="section-title">Product Delivery Flow</h2>
+    <p class="section-desc">Solution Design fans out into two parallel tracks, then converges at Integration.</p>
+
+    <div class="discovery-stage">
+        <h3>Fan-Out: Solution Design splits into two tracks</h3>
+        <div class="stage-lanes">
+            <div class="stage-lane">
+                <span class="flow-node artefact">Solution Design</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span style="color:#00bcd4;font-size:0.8rem;font-weight:600">Track A: Frontend Development</span>
+            </div>
+            <div class="stage-lane">
+                <span class="flow-node artefact">Solution Design</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span style="color:#00bcd4;font-size:0.8rem;font-weight:600">Track B: Acceptance + Test Cases</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <div class="discovery-stage">
+            <h3>Track A: Frontend Development</h3>
+            <div class="stage-desc">Product Engineer leads implementation. Agent handles component dev, API integration.</div>
+            <div class="stage-lanes">
+                <div class="stage-lane">
+                    <span class="flow-node human">Product Engineer</span>
+                    <span class="flow-arrow">&harr;</span>
+                    <span class="flow-node agent">SW Frontend Agent</span>
+                </div>
+            </div>
+            <div class="stage-output">
+                <span class="stage-output-label">Output:</span>
+                <span class="flow-node artefact">Implementation Artefact</span>
+            </div>
+        </div>
+
+        <div class="discovery-stage">
+            <h3>Track B: Acceptance + Test Cases</h3>
+            <div class="stage-desc">QA Engineer leads test design. Agent generates test cases, boundary analysis, failure modes.</div>
+            <div class="stage-lanes">
+                <div class="stage-lane">
+                    <span class="flow-node human">QA Engineer</span>
+                    <span class="flow-arrow">&harr;</span>
+                    <span class="flow-node agent">SW QA Agent</span>
+                </div>
+            </div>
+            <div class="stage-output">
+                <span class="stage-output-label">Output:</span>
+                <span class="flow-node artefact">Test Specification</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:center;color:#3a3a5a;font-size:1.5rem;margin:0.5rem 0;">&darr; Fan-In: Both tracks converge &darr;</div>
+
+    <div class="discovery-stage">
+        <h3>Integration Development</h3>
+        <div class="stage-desc">Both artefacts merge here. Product Engineer resolves deviations, agent validates integration and assesses release readiness.</div>
+        <div class="stage-lanes">
+            <div class="stage-lane">
+                <span class="flow-node artefact">Implementation Artefact</span>
+                <span class="flow-node artefact">Test Specification</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node human">Product Engineer</span>
+                <span class="flow-arrow">&harr;</span>
+                <span class="flow-node agent">SW Integration Agent</span>
+            </div>
+        </div>
+        <div class="stage-output">
+            <span class="stage-output-label">Output:</span>
+            <span class="flow-node artefact">Integration Package</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node tbd">Deployment Phase &mdash; TBD</span>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== AGENTS ==================== -->
+<div id="tab-agents" class="tab-content">
+    <h2 class="section-title">9 Specialized Agents</h2>
+    <p class="section-desc">Click any card to view full definition: capabilities, boundaries, reads/writes.</p>
+
+    <div class="flow-container">
+        <h2>Agent Specialization Pipeline</h2>
+        <div class="flow">
+            <div class="flow-group">
+                <div class="flow-group-label">Opportunity Space</div>
+                <span class="flow-node agent">Agentic AM</span>
+                <span class="flow-node agent">Agentic CS</span>
+                <span class="flow-node agent">Agentic CSM</span>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-group">
+                <div class="flow-group-label">Strategy</div>
+                <span class="flow-node agent">PM Consolidation</span>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-group">
+                <div class="flow-group-label">Problem Space</div>
+                <span class="flow-node agent">PM Research</span>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-group">
+                <div class="flow-group-label">Solution Space</div>
+                <span class="flow-node agent">UX/UI Design</span>
+            </div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-group">
+                <div class="flow-group-label">Delivery</div>
+                <span class="flow-node agent">SW Frontend</span>
+                <span class="flow-node agent">SW QA</span>
+                <span class="flow-node agent">SW Integration</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="agents-grid">
+        <div class="agent-card" onclick="showAgent('agentic-am')">
+            <div class="phase-badge opportunity">Opportunity Space</div>
+            <h3>Agentic Account Manager</h3>
+            <div class="human-pair">Paired with: Sales / Account Manager</div>
+            <div class="mission-preview">Transform raw customer conversations into structured, context-enriched opportunity signals.</div>
+        </div>
+        <div class="agent-card" onclick="showAgent('agentic-cs')">
+            <div class="phase-badge opportunity">Opportunity Space</div>
+            <h3>Agentic Customer Support</h3>
+            <div class="human-pair">Paired with: Customer Support</div>
+            <div class="mission-preview">Identify and structure product opportunity signals embedded within support interactions.</div>
+        </div>
+        <div class="agent-card" onclick="showAgent('agentic-csm')">
+            <div class="phase-badge opportunity">Opportunity Space</div>
+            <h3>Agentic Customer Success</h3>
+            <div class="human-pair">Paired with: Customer Success</div>
+            <div class="mission-preview">Surface product opportunities from ongoing customer relationship patterns and strategic conversations.</div>
+        </div>
+        <div class="agent-card" onclick="showAgent('pm-consolidation')">
+            <div class="phase-badge strategy">Strategy</div>
+            <h3>PM Consolidation Agent</h3>
+            <div class="human-pair">Paired with: CPO</div>
+            <div class="mission-preview">Synthesize multiple opportunity signals into a coherent strategic brief that enables CPO decision-making.</div>
+        </div>
+        <div class="agent-card" onclick="showAgent('pm-research')">
+            <div class="phase-badge problem">Problem Space</div>
+            <h3>PM Research Agent</h3>
+            <div class="human-pair">Paired with: Product Designer</div>
+            <div class="mission-preview">Provide deep research and analysis to support problem framing and validation.</div>
+        </div>
+        <div class="agent-card" onclick="showAgent('ux-design')">
+            <div class="phase-badge solution">Solution Space</div>
+            <h3>UX/UI Design Agent</h3>
+            <div class="human-pair">Paired with: Product Designer</div>
+            <div class="mission-preview">Translate problem analysis into concrete, implementable solution designs with UX flows and component specifications.</div>
+        </div>
+        <div class="agent-card" onclick="showAgent('sw-frontend')">
+            <div class="phase-badge delivery">Delivery &mdash; Frontend</div>
+            <h3>SW Frontend Agent</h3>
+            <div class="human-pair">Paired with: Product Engineer</div>
+            <div class="mission-preview">Implement the solution design as production-ready frontend components and API integrations.</div>
+        </div>
+        <div class="agent-card" onclick="showAgent('sw-qa')">
+            <div class="phase-badge delivery">Delivery &mdash; QA</div>
+            <h3>SW QA Agent</h3>
+            <div class="human-pair">Paired with: QA Engineer</div>
+            <div class="mission-preview">Transform solution design acceptance criteria into comprehensive test specifications.</div>
+        </div>
+        <div class="agent-card" onclick="showAgent('sw-integration')">
+            <div class="phase-badge delivery">Delivery &mdash; Integration</div>
+            <h3>SW Integration Agent</h3>
+            <div class="human-pair">Paired with: Product Engineer</div>
+            <div class="mission-preview">Merge implementation and test outputs into a validated, release-ready integration package.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ARTEFACTS ==================== -->
+<div id="tab-artefacts" class="tab-content">
+    <h2 class="section-title">Artefact Chain &mdash; Full Lifecycle</h2>
+    <p class="section-desc">7 artefact types form the chain. Each is dual-format (TOON source, human-readable render). Click any card to see schema.</p>
+
+    <div class="flow-container">
+        <h2>The Chain</h2>
+        <div class="flow">
+            <span class="flow-node artefact">OPP: Opportunity Signal</span>
+            <span class="flow-arrow" style="font-size:0.7rem;color:#666">many:1</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node artefact">SB: Strategic Brief</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node artefact">PA: Problem Analysis</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node artefact">SD: Solution Design</span>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-vertical">
+                <span class="flow-node artefact">IA: Implementation</span>
+                <span style="color:#555;font-size:0.7rem">+</span>
+                <span class="flow-node artefact">TS: Test Spec</span>
+            </div>
+            <span class="flow-arrow" style="font-size:0.7rem;color:#666">many:1</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node artefact">IP: Integration Package</span>
+        </div>
+    </div>
+
+    <div class="flow-container">
+        <h2>Common Schema (all artefacts share these fields)</h2>
+        <div class="flow" style="flex-wrap:wrap;gap:0.5rem;">
+            <span class="flow-node" style="background:#1a1a2e;border:1px solid #3a3a5a;color:#c0c0e0;font-family:monospace;font-size:0.78rem">id</span>
+            <span class="flow-node" style="background:#1a1a2e;border:1px solid #3a3a5a;color:#c0c0e0;font-family:monospace;font-size:0.78rem">type</span>
+            <span class="flow-node" style="background:#1a1a2e;border:1px solid #3a3a5a;color:#c0c0e0;font-family:monospace;font-size:0.78rem">status</span>
+            <span class="flow-node" style="background:#1a1a2e;border:1px solid #3a3a5a;color:#c0c0e0;font-family:monospace;font-size:0.78rem">created_by</span>
+            <span class="flow-node" style="background:#1a1a2e;border:1px solid #3a3a5a;color:#c0c0e0;font-family:monospace;font-size:0.78rem">upstream</span>
+            <span class="flow-node" style="background:#1a1a2e;border:1px solid #3a3a5a;color:#c0c0e0;font-family:monospace;font-size:0.78rem">downstream</span>
+            <span class="flow-node" style="background:#1a1a2e;border:1px solid #3a3a5a;color:#c0c0e0;font-family:monospace;font-size:0.78rem">phase</span>
+            <span class="flow-node" style="background:#1a1a2e;border:1px solid #3a3a5a;color:#c0c0e0;font-family:monospace;font-size:0.78rem">tags</span>
+        </div>
+    </div>
+
+    <h2 class="section-title">Artefact Types</h2>
+    <p class="section-desc">Click any artefact to view its full schema.</p>
+
+    <div class="artefact-chain">
+        <div class="artefact-card" onclick="showArtefact('opp-signal')"><div class="prefix">OPP-####</div><h4>Opportunity Signal</h4><p>Raw signal with enriched context. Origin point of the chain.</p></div>
+        <div class="chain-arrow">&rarr;</div>
+        <div class="artefact-card" onclick="showArtefact('strategic-brief')"><div class="prefix">SB-####</div><h4>Strategic Brief</h4><p>Consolidated, prioritized, strategy-validated signal cluster.</p></div>
+        <div class="chain-arrow">&rarr;</div>
+        <div class="artefact-card" onclick="showArtefact('problem-analysis')"><div class="prefix">PA-####</div><h4>Problem Analysis</h4><p>Research, user analysis, problem framing and recommendation.</p></div>
+        <div class="chain-arrow">&rarr;</div>
+        <div class="artefact-card" onclick="showArtefact('solution-design')"><div class="prefix">SD-####</div><h4>Solution Design</h4><p>Design specs, UX flows, acceptance criteria. Fan-out point.</p></div>
+        <div class="chain-arrow">&rarr;</div>
+        <div class="artefact-card" onclick="showArtefact('impl-artefact')"><div class="prefix">IA-####</div><h4>Implementation Artefact</h4><p>Code, components, API integrations, deviation log.</p></div>
+        <div class="chain-arrow">+</div>
+        <div class="artefact-card" onclick="showArtefact('test-spec')"><div class="prefix">TS-####</div><h4>Test Specification</h4><p>Test cases, acceptance validation, coverage assessment.</p></div>
+        <div class="chain-arrow">&rarr;</div>
+        <div class="artefact-card" onclick="showArtefact('integration-pkg')"><div class="prefix">IP-####</div><h4>Integration Package</h4><p>Merged, validated, release-ready output with conditions.</p></div>
+    </div>
+
+    <h2 class="section-title" style="margin-top:2.5rem">Example Thread: FX Margin Feature</h2>
+    <p class="section-desc">One feature traced through all 7 artefact types &mdash; from initial customer signal to release-ready package.</p>
+
+    <div class="example-thread">
+
+        <!-- OPP -->
+        <div class="example-step">
+            <div class="example-step-header">
+                <span class="eid">OPP-2026-0042</span>
+                <span class="etype">Opportunity Signal</span>
+                <span class="estatus captured">captured</span>
+            </div>
+            <div class="example-fields">
+                <div class="example-field">
+                    <span class="fl">Source</span>
+                    <span class="fv">Sales call &mdash; Account Manager</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Customer</span>
+                    <span class="fv">FinTech Corp (Mid-market, &euro;2M+ monthly cross-border)</span>
+                </div>
+                <div class="example-field full">
+                    <span class="fl">Signal</span>
+                    <span class="fv">"Three enterprise clients independently asked about applying custom FX spreads on cross-border payments this quarter"</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Similar Signals</span>
+                    <span class="fv">6 related in 90 days across Sales, Support, CS</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Strategic Alignment</span>
+                    <span class="fv highlight">HIGH &mdash; Revenue Diversification pillar</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Estimated Impact</span>
+                    <span class="fv">&euro;180K ARR potential, medium effort</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Confidence</span>
+                    <span class="fv">0.82</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-connector">&darr; <span style="font-size:0.7rem;color:#555;margin-left:0.5rem">many:1 &mdash; 7 signals cluster into 1 brief</span></div>
+
+        <!-- SB -->
+        <div class="example-step">
+            <div class="example-step-header">
+                <span class="eid">SB-2026-0015</span>
+                <span class="etype">Strategic Brief</span>
+                <span class="estatus approved">approved</span>
+            </div>
+            <div class="example-fields">
+                <div class="example-field">
+                    <span class="fl">Signal Cluster</span>
+                    <span class="fv">7 signals, 3 sources (Sales 3, Support 2, CS 2), 90-day span</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Pattern</span>
+                    <span class="fv">Enterprise clients need configurable FX margins on international payments</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">CPO Decision</span>
+                    <span class="fv highlight">PROCEED &mdash; Priority P1</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Dependencies</span>
+                    <span class="fv">Banking Circle FX API (held rates, RFQ)</span>
+                </div>
+                <div class="example-field full">
+                    <span class="fl">Problem Hypothesis</span>
+                    <span class="fv">"Businesses cannot monetize international payment flows because there is no mechanism to apply custom FX markup"</span>
+                </div>
+                <div class="example-field full">
+                    <span class="fl">Scope Guidance</span>
+                    <span class="fv">Fixed margin per currency pair; defer tiered/dynamic pricing to Phase 2</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-connector">&darr;</div>
+
+        <!-- PA -->
+        <div class="example-step">
+            <div class="example-step-header">
+                <span class="eid">PA-2026-0015</span>
+                <span class="etype">Problem Analysis</span>
+                <span class="estatus validated">validated</span>
+            </div>
+            <div class="example-fields">
+                <div class="example-field full">
+                    <span class="fl">Problem Statement</span>
+                    <span class="fv">Businesses cannot apply custom markup on FX rates for international payments, losing a key revenue stream</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Regulatory Findings</span>
+                    <span class="fv">PSD2 requires pre-transaction FX cost disclosure; CBPR2 mandates total charges transparency; B2B opt-out available</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Technical Findings</span>
+                    <span class="fv">Banking Circle supports held rates (30s TTL) + RFQ; margin must be applied before rate lock</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Market Findings</span>
+                    <span class="fv">Currencycloud offers 0-3% configurable spread; Wise Business uses transparent flat fee model</span>
+                </div>
+                <div class="example-field full">
+                    <span class="fl">Recommendation</span>
+                    <span class="fv highlight">Proceed &mdash; Fixed basis-point margin per currency pair, applied at rate quote time</span>
+                </div>
+                <div class="example-field full">
+                    <span class="fl">Open Questions</span>
+                    <span class="fv">Rounding policy for sub-pip amounts? Display format for end-customer transparency?</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-connector">&darr;</div>
+
+        <!-- SD -->
+        <div class="example-step">
+            <div class="example-step-header">
+                <span class="eid">SD-2026-0015</span>
+                <span class="etype">Solution Design</span>
+                <span class="estatus approved">approved</span>
+            </div>
+            <div class="example-fields">
+                <div class="example-field">
+                    <span class="fl">Solution</span>
+                    <span class="fv">FX Margin Configuration panel in Banking Portal + API margin parameter</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Approach</span>
+                    <span class="fv">Apply margin as basis-point spread at held-rate request time</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Scope In</span>
+                    <span class="fv">Fixed margin per pair, margin preview, audit trail</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Scope Out</span>
+                    <span class="fv">Tiered pricing, dynamic margins, volume discounts (Phase 2)</span>
+                </div>
+                <div class="example-field full">
+                    <span class="fl">Key User Flow</span>
+                    <span class="fv">Admin &rarr; Portal &rarr; FX Settings &rarr; Set margin per currency pair &rarr; Save &rarr; Payment quotes include margin &rarr; Customer sees breakdown</span>
+                </div>
+                <div class="example-field full">
+                    <span class="fl">Acceptance Criteria</span>
+                    <span class="fv mono">AC-1: Margin accurate to 4dp &nbsp;|&nbsp; AC-2: Pre-transaction breakdown displayed &nbsp;|&nbsp; AC-3: Changes audit-logged &nbsp;|&nbsp; AC-4: API supports margin_override</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-connector split">
+            <span>&swarr; <span style="font-size:0.65rem;color:#555">Track A</span></span>
+            <span>&searr; <span style="font-size:0.65rem;color:#555">Track B</span></span>
+        </div>
+
+        <!-- IA + TS side by side -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.3rem">
+            <div class="example-step" style="margin-bottom:0">
+                <div class="example-step-header">
+                    <span class="eid">IA-2026-0015</span>
+                    <span class="etype">Implementation</span>
+                    <span class="estatus ready">ready</span>
+                </div>
+                <div class="example-fields" style="grid-template-columns:1fr">
+                    <div class="example-field">
+                        <span class="fl">Components</span>
+                        <span class="fv">MarginConfigPanel, RatePreviewWidget, MarginAuditLog &mdash; all DONE</span>
+                    </div>
+                    <div class="example-field">
+                        <span class="fl">API Integrations</span>
+                        <span class="fv">BC Held Rate wrapped with margin layer; new POST /settings/fx-margins</span>
+                    </div>
+                    <div class="example-field">
+                        <span class="fl">Architecture Decision</span>
+                        <span class="fv">Margin applied server-side before rate returned (security); config cached 60s TTL</span>
+                    </div>
+                    <div class="example-field">
+                        <span class="fl">Deviations</span>
+                        <span class="fv highlight">None</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-step" style="margin-bottom:0">
+                <div class="example-step-header">
+                    <span class="eid">TS-2026-0015</span>
+                    <span class="etype">Test Specification</span>
+                    <span class="estatus complete">complete</span>
+                </div>
+                <div class="example-fields" style="grid-template-columns:1fr">
+                    <div class="example-field">
+                        <span class="fl">Coverage</span>
+                        <span class="fv">94% of acceptance criteria mapped to test cases</span>
+                    </div>
+                    <div class="example-field">
+                        <span class="fl">Sample Tests</span>
+                        <span class="fv mono">TC-001: 50bps on EUR/USD 1.0842 &rarr; expect 1.0892<br>TC-005: Display "Base: 1.0842 | Margin: +0.50% | Final: 1.0896"</span>
+                    </div>
+                    <div class="example-field">
+                        <span class="fl">Risk Area</span>
+                        <span class="fv">Rate expiry during margin application (30s TTL edge case)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-connector">&darr; <span style="font-size:0.7rem;color:#555;margin-left:0.5rem">fan-in &mdash; both tracks converge</span></div>
+
+        <!-- IP -->
+        <div class="example-step">
+            <div class="example-step-header">
+                <span class="eid">IP-2026-0015</span>
+                <span class="etype">Integration Package</span>
+                <span class="estatus ready">ready</span>
+            </div>
+            <div class="example-fields">
+                <div class="example-field">
+                    <span class="fl">Merge Status</span>
+                    <span class="fv highlight">Implementation + Test Spec aligned &mdash; 0 deviations</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Integration Tests</span>
+                    <span class="fv">47 passed, 0 failed, 0 blocked</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Release Readiness</span>
+                    <span class="fv highlight">READY</span>
+                </div>
+                <div class="example-field">
+                    <span class="fl">Rollback Plan</span>
+                    <span class="fv mono">Feature flag fx_margin_enabled &rarr; set to false</span>
+                </div>
+                <div class="example-field full">
+                    <span class="fl">Release Notes</span>
+                    <span class="fv">Configurable FX margin per currency pair via Portal and API. Fixed margin only (tiered pricing planned Phase 2). Requires Banking Circle held-rate API v2.1+</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-connector">&darr;</div>
+        <div style="text-align:center;padding:0.8rem;color:#555;font-size:0.85rem;font-style:italic;border:1.5px dashed #333;border-radius:8px;background:#111118">Deployment Phase &mdash; TBD</div>
+
+    </div>
+</div>
+
+<!-- ==================== MATRIX ==================== -->
+<div id="tab-matrix" class="tab-content">
+    <h2 class="section-title">Access Matrix &mdash; Who Reads and Writes What</h2>
+    <div class="flow-container">
+        <table class="matrix-table">
+            <thead><tr><th>Agent</th><th>Phase</th><th>Reads</th><th>Writes</th><th>Side Outputs</th></tr></thead>
+            <tbody>
+                <tr><td>Agentic Account Manager</td><td>Opportunity</td><td><span class="read-badge">existing signals</span><span class="read-badge">strategic briefs</span><span class="read-badge">research</span></td><td><span class="write-badge">opportunity-signals</span></td><td>&mdash;</td></tr>
+                <tr><td>Agentic Customer Support</td><td>Opportunity</td><td><span class="read-badge">existing signals</span><span class="read-badge">strategic briefs</span><span class="read-badge">research</span></td><td><span class="write-badge">opportunity-signals</span></td><td>&mdash;</td></tr>
+                <tr><td>Agentic Customer Success</td><td>Opportunity</td><td><span class="read-badge">existing signals</span><span class="read-badge">strategic briefs</span><span class="read-badge">research</span></td><td><span class="write-badge">opportunity-signals</span></td><td>&mdash;</td></tr>
+                <tr><td>PM Consolidation Agent</td><td>Strategy</td><td><span class="read-badge">opportunity-signals</span><span class="read-badge">existing briefs</span><span class="read-badge">problem-analyses</span><span class="read-badge">research</span></td><td><span class="write-badge">strategic-briefs</span></td><td>&mdash;</td></tr>
+                <tr><td>PM Research Agent</td><td>Problem</td><td><span class="read-badge">strategic-briefs</span><span class="read-badge">opportunity-signals</span><span class="read-badge">research</span><span class="read-badge">external sources</span></td><td><span class="write-badge">problem-analyses</span></td><td><span class="write-badge">research</span></td></tr>
+                <tr><td>UX/UI Design Agent</td><td>Solution</td><td><span class="read-badge">problem-analyses</span><span class="read-badge">designs</span><span class="read-badge">strategic-briefs</span><span class="read-badge">research</span></td><td><span class="write-badge">solution-designs</span></td><td><span class="write-badge">designs</span></td></tr>
+                <tr><td>SW Frontend Agent</td><td>Delivery</td><td><span class="read-badge">solution-designs</span><span class="read-badge">designs</span><span class="read-badge">research</span><span class="read-badge">source code</span></td><td><span class="write-badge">implementation</span></td><td>&mdash;</td></tr>
+                <tr><td>SW QA Agent</td><td>Delivery</td><td><span class="read-badge">solution-designs</span><span class="read-badge">designs</span><span class="read-badge">implementation</span><span class="read-badge">research</span></td><td><span class="write-badge">test-specifications</span></td><td>&mdash;</td></tr>
+                <tr><td>SW Integration Agent</td><td>Delivery</td><td><span class="read-badge">implementation</span><span class="read-badge">test-specifications</span><span class="read-badge">solution-designs</span><span class="read-badge">source code</span></td><td><span class="write-badge">integration-packages</span></td><td>&mdash;</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="section-title" style="margin-top:2rem">Data Flow Patterns</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:1rem">
+        <div class="flow-container" style="margin:0">
+            <h2>Fan-In: Many &rarr; 1</h2>
+            <div style="padding:0.5rem 0;font-size:0.85rem;color:#aaa">
+                <div>OPP Signal 1 &rarr;</div>
+                <div>OPP Signal 2 &rarr; <strong style="color:#ffa500">Strategic Brief</strong></div>
+                <div>OPP Signal 3 &rarr;</div>
+            </div>
+        </div>
+        <div class="flow-container" style="margin:0">
+            <h2>Linear: 1 &rarr; 1</h2>
+            <div style="padding:0.5rem 0;font-size:0.85rem;color:#aaa">
+                Strategic Brief &rarr; Problem Analysis &rarr; Solution Design
+            </div>
+        </div>
+        <div class="flow-container" style="margin:0">
+            <h2>Fan-Out: 1 &rarr; Many</h2>
+            <div style="padding:0.5rem 0;font-size:0.85rem;color:#aaa">
+                <div style="margin-left:8rem">&rarr; Implementation</div>
+                <div>Solution Design</div>
+                <div style="margin-left:8rem">&rarr; Test Spec</div>
+            </div>
+        </div>
+        <div class="flow-container" style="margin:0">
+            <h2>Fan-In: Many &rarr; 1</h2>
+            <div style="padding:0.5rem 0;font-size:0.85rem;color:#aaa">
+                <div>Implementation &rarr;</div>
+                <div style="margin-left:5rem"><strong style="color:#00bcd4">Integration Package</strong></div>
+                <div>Test Spec &rarr;</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DETAIL OVERLAY ==================== -->
+<div id="detail-overlay" class="detail-overlay" onclick="if(event.target===this)closeDetail()">
+    <div class="detail-panel" id="detail-content">
+        <button class="close-btn" onclick="closeDetail()">&times;</button>
+    </div>
+</div>
+
+<script>
+var currentDetailText = '';
+
+function copyDetail(btn) {
+    navigator.clipboard.writeText(currentDetailText).then(function() {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+
+function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('nav button').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('tab-' + tabId).classList.add('active');
+    event.target.classList.add('active');
+}
+
+var agents = {
+    'agentic-am': { name: 'Agentic Account Manager', phase: 'Opportunity Space', human: 'Sales / Account Manager', mission: 'Transform raw customer conversations into structured, context-enriched opportunity signals.', capabilities: ['Structuring unstructured input (conversation notes, call summaries)', 'Cross-referencing against existing opportunity signals to detect patterns', 'Market context enrichment (competitor activity, industry trends)', 'Strategic alignment assessment against current priorities', 'Customer profile enrichment (segment, size, relationship history)', 'Estimating signal strength and business impact'], boundaries: ['Does NOT prioritize signals (CPO job)', 'Does NOT propose solutions (Solution Space)', 'Does NOT validate feasibility (Problem Space)', 'Does NOT merge or consolidate signals (PM Consolidation)'], reads: ['existing signals', 'strategic briefs', 'research/'], writes: 'opportunity-signals/' },
+    'agentic-cs': { name: 'Agentic Customer Support', phase: 'Opportunity Space', human: 'Customer Support', mission: 'Identify and structure product opportunity signals embedded within support interactions.', capabilities: ['Distinguishing bugs/issues from product opportunities', 'Extracting signal from noise (complaints vs opportunities)', 'Quantifying signal frequency (how many tickets touch this theme)', 'Identifying workarounds customers are using (indicates unmet need)', 'Capturing urgency and customer sentiment'], boundaries: ['Does NOT resolve support tickets (separate function)', 'Does NOT prioritize or consolidate', 'Does NOT propose solutions', 'Only creates signals when a genuine product opportunity exists'], reads: ['existing signals', 'strategic briefs', 'research/'], writes: 'opportunity-signals/' },
+    'agentic-csm': { name: 'Agentic Customer Success', phase: 'Opportunity Space', human: 'Customer Success', mission: 'Surface product opportunities from ongoing customer relationship patterns and strategic conversations.', capabilities: ['Identifying opportunities from relationship context (renewals, expansion, churn risk)', 'Connecting customer growth trajectory to product gaps', 'Capturing competitive displacement signals', 'Assessing revenue impact through customer lifetime value lens', 'Detecting patterns across customer cohorts'], boundaries: ['Does NOT prioritize or consolidate', 'Does NOT propose solutions', 'Does NOT make retention/commercial decisions'], reads: ['existing signals', 'strategic briefs', 'research/'], writes: 'opportunity-signals/' },
+    'pm-consolidation': { name: 'PM Consolidation Agent', phase: 'Strategy', human: 'CPO', mission: 'Synthesize multiple opportunity signals into a coherent strategic brief that enables CPO decision-making.', capabilities: ['Clustering related signals across sources', 'Pattern analysis (frequency, trend, urgency)', 'Strategic alignment assessment against product strategy/roadmap', 'Dependency mapping (relation to existing work)', 'Conflict detection (contradiction with current direction)', 'Presenting clear decision frameworks (proceed/park/reject)'], boundaries: ['Does NOT make priority decisions (CPO decides)', 'Does NOT scope solutions', 'Does NOT go deep on research (PM Research does that)', 'Consolidates and presents - does NOT filter without CPO awareness'], reads: ['opportunity-signals/', 'existing briefs', 'problem-analyses/', 'research/'], writes: 'strategic-briefs/' },
+    'pm-research': { name: 'PM Research Agent', phase: 'Problem Space', human: 'Product Designer', mission: 'Provide deep research and analysis to support problem framing and validation.', capabilities: ['Regulatory research (compliance requirements, legal frameworks)', 'Technical feasibility research (API capabilities, platform constraints)', 'Market analysis (competitor approaches, industry standards)', 'User/customer need analysis (from signal data + market context)', 'Constraint identification', 'Creating detailed reference documents for research threads'], boundaries: ['Does NOT design solutions (Solution Space)', 'Does NOT make strategic priority calls (CPO decided)', 'Does NOT override problem hypothesis - CAN challenge with evidence', 'Research supports Designer analysis - Designer makes framing decisions'], reads: ['strategic-briefs/', 'opportunity-signals/', 'research/', 'external sources'], writes: 'problem-analyses/', sideOutputs: 'research/ (new reference docs)' },
+    'ux-design': { name: 'UX/UI Design Agent', phase: 'Solution Space', human: 'Product Designer', mission: 'Translate problem analysis into concrete, implementable solution designs with UX flows and component specifications.', capabilities: ['Translating abstract needs into concrete user flows', 'Component specification (inputs, states, behaviors, edge cases)', 'Interaction pattern design (modals, validation, feedback)', 'Information architecture for new features', 'Identifying UI/UX implications of technical constraints', 'Defining acceptance criteria from a design perspective'], boundaries: ['Does NOT redefine the problem (already done)', 'Does NOT make implementation/architecture decisions (Delivery)', 'Does NOT scope - works within scope defined by Strategic Brief', 'Design decisions belong to Product Designer - agent proposes, human decides'], reads: ['problem-analyses/', 'designs/', 'strategic-briefs/', 'research/'], writes: 'solution-designs/', sideOutputs: 'designs/ (flows, components)' },
+    'sw-frontend': { name: 'SW Frontend Agent', phase: 'Delivery - Frontend', human: 'Product Engineer', mission: 'Implement the solution design as production-ready frontend components and API integrations.', capabilities: ['Frontend component development', 'API integration implementation', 'Translating design specs into working components', 'Architecture decisions at implementation level', 'Identifying deviations from spec', 'Performance consideration and optimization'], boundaries: ['Does NOT redesign (deviations are flagged, not unilaterally resolved)', 'Does NOT write test specifications (SW QA does that)', 'Does NOT deploy (Integration then Deployment)', 'Follows Solution Design acceptance criteria as the contract'], reads: ['solution-designs/', 'designs/', 'research/', 'source code'], writes: 'implementation/' },
+    'sw-qa': { name: 'SW QA Agent', phase: 'Delivery - QA', human: 'QA Engineer', mission: 'Transform solution design acceptance criteria into comprehensive test specifications.', capabilities: ['Acceptance criteria decomposition into test cases', 'Boundary/edge case identification', 'Performance test definition', 'Failure mode analysis', 'Test data requirements specification', 'Coverage gap analysis and risk-based prioritization'], boundaries: ['Does NOT implement tests in code (produces specifications)', 'Does NOT modify acceptance criteria (flags gaps)', 'Does NOT fix defects (documents them)', 'Does NOT execute tests (specifies them)'], reads: ['solution-designs/', 'designs/', 'implementation/', 'research/'], writes: 'test-specifications/' },
+    'sw-integration': { name: 'SW Integration Agent', phase: 'Delivery - Integration', human: 'Product Engineer', mission: 'Merge implementation and test outputs into a validated, release-ready integration package.', capabilities: ['Deviation resolution (matching built vs specified)', 'Integration test coordination', 'Release readiness assessment', 'Conflict identification between implementation and test spec', 'Release notes generation', 'Rollback plan definition'], boundaries: ['Does NOT add new features (only integrates what exists)', 'Does NOT override test specifications', 'Does NOT deploy (outputs to Deployment Phase)', 'Flags unresolved deviations - does NOT approve unilaterally'], reads: ['implementation/', 'test-specifications/', 'solution-designs/', 'source code'], writes: 'integration-packages/' }
+};
+
+var artefacts = {
+    'opp-signal': { name: 'Opportunity Signal', prefix: 'OPP', folder: 'artefacts/opportunity-signals/', producedBy: 'Opportunity Space agents + Sales/Support/CS humans', consumedBy: 'PM Consolidation Agent + CPO', sections: [{ title: 'Human Input', fields: ['source_channel', 'customer (name, segment, relationship)', 'signal (freeform description)', 'business_context'] }, { title: 'Agent Enrichment', fields: ['similar_signals (cross-reference)', 'signal_frequency', 'market_context', 'strategic_alignment + reasoning', 'estimated_impact (revenue, retention, effort)', 'confidence score', 'evidence (quotes, data)'] }] },
+    'strategic-brief': { name: 'Strategic Brief', prefix: 'SB', folder: 'artefacts/strategic-briefs/', producedBy: 'PM Consolidation Agent + CPO', consumedBy: 'PM Research Agent + Product Designer', sections: [{ title: 'Agent Consolidation', fields: ['signal_cluster (total, sources, timespan)', 'pattern description', 'overlap_analysis', 'strategy_validation (alignment, pillar, dependencies, conflicts)', 'market_context (competitors, urgency)'] }, { title: 'CPO Input', fields: ['decision (proceed/park/reject/needs_more_info)', 'priority (P1/P2/P3)', 'problem_hypothesis', 'scope_guidance', 'constraints', 'notes'] }] },
+    'problem-analysis': { name: 'Problem Analysis', prefix: 'PA', folder: 'artefacts/problem-analyses/', producedBy: 'PM Research Agent + Product Designer', consumedBy: 'UX/UI Design Agent + Product Designer', sections: [{ title: 'Problem Framing', fields: ['problem_statement', 'who_is_affected (primary, secondary)', 'current_behavior', 'desired_outcome'] }, { title: 'Agent Research', fields: ['regulatory_findings (summary, ref, open questions)', 'technical_findings (summary, ref, constraints)', 'market_findings (summary, competitors)'] }, { title: 'Designer Analysis', fields: ['user_needs (prioritized list)', 'constraints', 'impact_assessment (reach, value, effort, confidence)', 'recommendation', 'open_questions'] }] },
+    'solution-design': { name: 'Solution Design', prefix: 'SD', folder: 'artefacts/solution-designs/', producedBy: 'UX/UI Design Agent + Product Designer', consumedBy: 'SW Frontend Agent + SW QA Agent', sections: [{ title: 'Solution Framing', fields: ['solution_statement', 'approach', 'scope (in/out)'] }, { title: 'Agent: UX/UI Design', fields: ['user_flows (steps + refs)', 'component_specs (name, description, refs)', 'interaction_patterns'] }, { title: 'Designer Decisions', fields: ['design_rationale', 'technical_notes', 'acceptance_criteria', 'dependencies', 'risk_assessment (risk + mitigation)'] }] },
+    'impl-artefact': { name: 'Implementation Artefact', prefix: 'IA', folder: 'artefacts/implementation/', producedBy: 'SW Frontend Agent + Product Engineer', consumedBy: 'SW Integration Agent + Product Engineer', sections: [{ title: 'Implementation Plan', fields: ['components (name, source_spec, implementation path, status)', 'api_integrations (endpoint, wrapper, docs, status)'] }, { title: 'Agent: Technical Detail', fields: ['architecture_decisions (decision + rationale)', 'code_references', 'known_issues'] }, { title: 'Engineer Notes', fields: ['blockers', 'deviations (from spec, actual, needs_decision)', 'ready_for_integration'] }] },
+    'test-spec': { name: 'Test Specification', prefix: 'TS', folder: 'artefacts/test-specifications/', producedBy: 'SW QA Agent + QA Engineer', consumedBy: 'SW Integration Agent + Product Engineer', sections: [{ title: 'Test Coverage', fields: ['acceptance_criteria_mapping (criteria to test case IDs)'] }, { title: 'Agent: Test Cases', fields: ['test cases (id, title, type, preconditions, steps, expected result)'] }, { title: 'QA Engineer Decisions', fields: ['coverage_assessment', 'test_environment', 'data_requirements', 'risk_areas'] }] },
+    'integration-pkg': { name: 'Integration Package', prefix: 'IP', folder: 'artefacts/integration-packages/', producedBy: 'SW Integration Agent + Product Engineer', consumedBy: 'Deployment Phase (TBD)', sections: [{ title: 'Integration Status', fields: ['merge_status (implementation + test spec)', 'deviations_resolved (from, deviation, resolution, approved_by)'] }, { title: 'Agent: Integration Validation', fields: ['integration_tests (total, passed, failed, blocked)', 'failed_tests detail (id, description, failure_reason, severity)'] }, { title: 'Engineer Assessment', fields: ['release_readiness (ready/conditional/blocked)', 'conditions', 'release_notes (features, limitations, dependencies)', 'rollback_plan'] }] }
+};
+
+function showAgent(id) {
+    var a = agents[id]; if (!a) return;
+    currentDetailText = formatAgentText(a);
+    var caps = a.capabilities.map(function(c) { return '<li>' + c + '</li>'; }).join('');
+    var bounds = a.boundaries.map(function(b) { return '<li>' + b + '</li>'; }).join('');
+    var reads = a.reads.map(function(r) { return '<span class="tag green">' + stripSlash(r) + '</span>'; }).join('');
+    var side = a.sideOutputs ? '<div style="margin-top:0.5rem"><span class="tag orange">' + stripSlash(a.sideOutputs) + '</span> <span style="color:#888;font-size:0.8rem">(side output)</span></div>' : '';
+    document.getElementById('detail-content').innerHTML = '<button class="close-btn" onclick="closeDetail()">&times;</button><button class="copy-btn" onclick="copyDetail(this)">Copy</button><h3>' + a.name + '</h3><div class="subtitle">' + a.phase + ' &middot; Paired with ' + a.human + '</div><div class="mission">' + a.mission + '</div><div class="section"><h4>Capabilities</h4><ul>' + caps + '</ul></div><div class="section"><h4>Boundaries</h4><ul>' + bounds + '</ul></div><div class="section"><h4>Reads</h4><div>' + reads + '</div></div><div class="section"><h4>Writes</h4><div><span class="tag">' + stripSlash(a.writes) + '</span></div>' + side + '</div>';
+    document.getElementById('detail-overlay').classList.add('visible');
+}
+
+function stripSlash(s) { return s.replace(/\/+$/, ''); }
+
+function formatAgentText(a) {
+    var t = a.name + '\n\n';
+    t += a.phase + ' \u00B7 Paired with ' + a.human + '\n';
+    t += a.mission + '\n\n';
+    t += 'Capabilities\n';
+    a.capabilities.forEach(function(c) { t += '  \u2022 ' + c + '\n'; });
+    t += '\nBoundaries\n';
+    a.boundaries.forEach(function(b) { t += '  \u2022 ' + b + '\n'; });
+    t += '\nReads\n  ' + a.reads.map(stripSlash).join(', ') + '\n';
+    t += '\nWrites\n  ' + stripSlash(a.writes) + '\n';
+    return t;
+}
+
+function showArtefact(id) {
+    var a = artefacts[id]; if (!a) return;
+    currentDetailText = formatArtefactText(a);
+    var secs = a.sections.map(function(s) { return '<div class="section"><h4>' + s.title + '</h4><ul>' + s.fields.map(function(f) { return '<li>' + f + '</li>'; }).join('') + '</ul></div>'; }).join('');
+    document.getElementById('detail-content').innerHTML = '<button class="close-btn" onclick="closeDetail()">&times;</button><button class="copy-btn" onclick="copyDetail(this)">Copy</button><h3>' + a.name + '</h3><div class="subtitle"><span class="tag">' + a.prefix + '-YYYY-####</span> <span class="tag green">' + stripSlash(a.folder) + '</span></div><div class="section"><h4>Produced By</h4><p style="color:#c0c0d0;font-size:0.9rem">' + a.producedBy + '</p></div><div class="section"><h4>Consumed By</h4><p style="color:#c0c0d0;font-size:0.9rem">' + a.consumedBy + '</p></div><h4 style="color:#7c8cf5;margin:1.5rem 0 0.8rem;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.08em">Schema Sections</h4>' + secs;
+    document.getElementById('detail-overlay').classList.add('visible');
+}
+
+function formatArtefactText(a) {
+    var t = a.name + '\n\n';
+    t += a.prefix + '-YYYY-####\n';
+    t += stripSlash(a.folder) + '\n\n';
+    t += 'Produced By\n  ' + a.producedBy + '\n\n';
+    t += 'Consumed By\n  ' + a.consumedBy + '\n\n';
+    t += 'Schema Sections\n';
+    a.sections.forEach(function(s) {
+        t += '\n' + s.title + '\n';
+        s.fields.forEach(function(f) { t += '  \u2022 ' + f + '\n'; });
+    });
+    return t;
+}
+
+function closeDetail() { document.getElementById('detail-overlay').classList.remove('visible'); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
+</script>
+</body>
+</html>
