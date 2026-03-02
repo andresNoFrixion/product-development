@@ -63,6 +63,18 @@
         .phase-card .agent-label { font-size: 0.8rem; color: #7c8cf5; margin-bottom: 0.5rem; }
         .phase-card .artefact-label { font-size: 0.75rem; color: #ff6b6b; background: rgba(255,107,107,0.1); padding: 0.2rem 0.5rem; border-radius: 10px; display: inline-block; }
         .phase-card .phase-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem; }
+        /* ===== INTRO SECTION ===== */
+        .intro-section { margin-bottom: 2.5rem; }
+        .intro-lead { font-size: 1.15rem; color: #c8c8e0; line-height: 1.7; margin-bottom: 1.5rem; max-width: 900px; }
+        .intro-lead strong { color: #fff; }
+        .intro-body { color: #9999bb; font-size: 0.92rem; line-height: 1.75; max-width: 900px; margin-bottom: 1.2rem; }
+        .intro-body strong { color: #c0c0e0; }
+        .intro-pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0 0.5rem; max-width: 900px; }
+        .intro-pillar { background: #13131f; border: 1px solid #2a2a4a; border-radius: 10px; padding: 1.2rem; border-top: 3px solid #7c8cf5; }
+        .intro-pillar h4 { font-size: 0.85rem; color: #7c8cf5; margin-bottom: 0.4rem; }
+        .intro-pillar p { font-size: 0.82rem; color: #8888aa; line-height: 1.55; }
+        @media (max-width: 700px) { .intro-pillars { grid-template-columns: 1fr; } }
+
         .phase-card .phase-tag.discovery { color: #50c878; }
         .phase-card .phase-tag.delivery { color: #00bcd4; }
 
@@ -188,6 +200,39 @@
 
 <!-- ==================== OVERVIEW ==================== -->
 <div id="tab-overview" class="tab-content active">
+
+    <!-- ===== INTRODUCTION ===== -->
+    <div class="intro-section">
+        <h2 class="section-title" style="margin-top:0">What is this?</h2>
+        <p class="intro-lead">
+            A complete operating system for <strong>human-agent product development</strong> &mdash; where every stage of the product lifecycle, from the first customer signal to the shipped feature, is handled by a <strong>specialised AI agent paired with a human decision-maker</strong>.
+        </p>
+        <p class="intro-body">
+            Most teams bolt AI onto existing workflows as an afterthought: a copilot here, a summariser there. This framework takes the opposite approach. It <strong>redesigns the entire product development process</strong> around the assumption that every role has an AI counterpart. The result is a structured pipeline of <strong>9 narrow-scope agents</strong>, connected by <strong>7 typed artefacts</strong>, where humans retain full decision authority at every stage.
+        </p>
+        <p class="intro-body">
+            The key insight is <strong>stateless handoff</strong>. Agents don't share memory or context with each other &mdash; the artefact is the <em>only</em> bridge between stages. Each artefact is written in a dual format: human-readable for review and approval, and machine-oriented (<strong>TOON</strong> &mdash; Token-Oriented Object Notation) so the next agent can consume it without lossy interpretation. This means any agent can be swapped, upgraded, or replaced without breaking the chain.
+        </p>
+        <p class="intro-body">
+            The framework covers two phases. <strong>Product Discovery</strong> captures opportunity signals from three customer-facing channels, converges them at a CPO decision point, then deepens them through research and solution design. <strong>Product Delivery</strong> fans out into parallel frontend development and test specification tracks, then converges at integration for release. Every transition is explicit, every decision is traced, and every artefact is versioned.
+        </p>
+
+        <div class="intro-pillars">
+            <div class="intro-pillar">
+                <h4>Agents are specialists</h4>
+                <p>Each agent has a narrow mission, defined capabilities, and hard boundaries. No generalists. Narrow scope produces higher quality output and makes agents easier to build, test, and improve independently.</p>
+            </div>
+            <div class="intro-pillar">
+                <h4>Artefacts are the contract</h4>
+                <p>The typed artefact chain is the system's backbone. Each artefact has a schema, a producer, and a consumer. Walk any artefact forward or backward to trace decisions from signal to shipped code.</p>
+            </div>
+            <div class="intro-pillar">
+                <h4>Humans hold the pen</h4>
+                <p>Agents propose, humans decide. The CPO is the strategic convergence point. Product designers approve research and solutions. Engineers approve implementation. No autonomous shipping.</p>
+            </div>
+        </div>
+    </div>
+
     <h2 class="section-title">End-to-End Lifecycle</h2>
     <p class="section-desc">From customer signal to shipped feature. Green = Human, Blue = Agent, Red = Artefact.</p>
 
